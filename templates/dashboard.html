@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Comprobantes — Mundosim{% endblock %}
+
+{% block content %}
+
+<div class="stats">
+  <div class="card">
+    <div class="card-title">Total facturado este mes</div>
+    <div class="card-value" style="color:#3b7cff">${{ "{:,.0f}".format(total_mes) }}</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Comprobantes este mes</div>
+    <div class="card-value">{{ cant_mes }}</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Sucursal activa</div>
+    <div class="card-value" style="font-size:20px;padding-top:4px">{{ sucursal }}</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="section-header">
+    <span class="section-title">Comprobantes recientes</span>
+    <div style="display:flex;gap:8px">
+      <select id="filtro-estado" style="width:auto;font-size:12px;padding:6px 10px">
+        <option value="">Todos</option>
+        <option value="APROBADO">Aprobados</option>
+        <option value="RECHAZADO">Rechazados</option>
+      </select>
+      <a href="{{ url_for('emitir') }}" class="btn btn-primary" style="font-size:13px;padding:7px 16px">
+        + Nueva factura
+      </a>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table id="tabla-comprobantes">
+      <thead>
+        <tr>
+          <th>N° Comp.</th>
+          <th>Fecha</th>
+          <th>Destinatario</th>
+          <th>Monto</th>
+          <th>CAE</th>
+          <th>Estado</th>
+          <th>Sucursal</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in comprobantes %}
+        <tr>
+          <td class="mono">
+            {% if c['numero'] %}
+              {{ "%04d"|format(c['punto_venta']) }}-{{ "%08d"|format(c['numero']) }}
+            {% else %}
+              <span class="muted">—</span>
+            {% endif %}
+          </td>
+          <td class="muted">{{ c['fecha'] }}</td>
+          <td>{{ c['destinatario'] }}</td>
+          <td class="mono" style="font-weight:600">${{ "{:,.2f}".format(c['monto']) }}</td>
+          <td class="mono muted" style="font-size:11px">
+            {{ c['cae'] or '—' }}
+          </td>
+          <td>
+            {% if c['estado'] == 'APROBADO' %}
+              <span class="badge badge-ok">Aprobado</span>
+            {% else %}
+              <span class="badge badge-err" title="{{ c['error'] or '' }}">Rechazado</span>
+            {% endif %}
+          </td>
+          <td class="muted" style="font-size:12px">{{ c['sucursal'] }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" style="text-align:center;padding:40px;color:#6b7280">
+            Todavía no hay comprobantes. <a href="{{ url_for('emitir') }}" style="color:#3b7cff">Emitir la primera factura →</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  document.getElementById("filtro-estado").addEventListener("change", function() {
+    const val = this.value.toLowerCase();
+    document.querySelectorAll("#tabla-comprobantes tbody tr").forEach(row => {
+      if (!val) { row.style.display = ""; return; }
+      const badge = row.querySelector(".badge");
+      if (!badge) return;
+      row.style.display = badge.textContent.trim().toLowerCase().includes(val) ? "" : "none";
+    });
+  });
+</script>
+
+{% endblock %}

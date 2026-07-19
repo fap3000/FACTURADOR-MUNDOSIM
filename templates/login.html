@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ingresar — Mundosim Facturador</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0f1117;
+      color: #e8eaf0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-wrap {
+      width: 100%;
+      max-width: 380px;
+      padding: 20px;
+    }
+    .logo {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    .logo h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -.5px;
+    }
+    .logo h1 span { color: #3b7cff; }
+    .logo p { color: #6b7280; font-size: 13px; margin-top: 6px; }
+
+    .card {
+      background: #181c27;
+      border: 1px solid #252a3a;
+      border-radius: 12px;
+      padding: 28px;
+    }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 12px; font-weight: 500; color: #6b7280; margin-bottom: 6px; }
+    input {
+      width: 100%;
+      background: #0f1117;
+      border: 1px solid #252a3a;
+      border-radius: 7px;
+      color: #e8eaf0;
+      padding: 11px 14px;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      transition: border-color .15s;
+    }
+    input:focus { outline: none; border-color: #3b7cff; }
+    .btn {
+      width: 100%;
+      background: #3b7cff;
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background .15s;
+    }
+    .btn:hover { background: #2d6be8; }
+    .error-msg {
+      background: rgba(239,68,68,.1);
+      border: 1px solid rgba(239,68,68,.3);
+      color: #ef4444;
+      padding: 10px 14px;
+      border-radius: 7px;
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+    .hint {
+      text-align: center;
+      color: #4b5563;
+      font-size: 11px;
+      margin-top: 20px;
+      line-height: 1.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="logo">
+      <h1>Mundosim <span>·</span> Facturador</h1>
+      <p>Sistema de facturación electrónica ARCA</p>
+    </div>
+
+    <div class="card">
+      {% if error %}
+        <div class="error-msg">{{ error }}</div>
+      {% endif %}
+
+      <form method="POST">
+        <div class="form-group">
+          <label>Usuario</label>
+          <input type="text" name="usuario" placeholder="mendoza / sanjuan / admin" autofocus autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label>Contraseña</label>
+          <input type="password" name="password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn">Ingresar</button>
+      </form>
+    </div>
+
+    <p class="hint">
+      Usuarios: mendoza · sanjuan · admin<br>
+      Cambiá las contraseñas en las variables de entorno.
+    </p>
+  </div>
+</body>
+</html>

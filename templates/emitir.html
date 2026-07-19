@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block title %}Emitir Factura - Mundosim{% endblock %}
+
+{% block content %}
+
+<div style="max-width:540px;margin:0 auto">
+  <div class="section-header" style="margin-bottom:24px">
+    <div>
+      <div style="font-size:12px;color:#6b7280;margin-bottom:4px">{{ sucursal }}</div>
+      <div class="section-title">Nueva Factura</div>
+    </div>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-ghost" style="font-size:13px;padding:7px 14px">Volver</a>
+  </div>
+
+  <div class="card">
+    <form method="POST">
+
+      <div style="margin-bottom:20px">
+        <div class="card-title" style="margin-bottom:12px">Tipo de comprobante</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <label style="cursor:pointer">
+            <input type="radio" name="tipo" value="A" id="tipoA" style="display:none" onchange="actualizarTipo()">
+            <div class="tipo-btn" id="btnA" onclick="seleccionar('A')"
+              style="border:2px solid #252a3a;border-radius:8px;padding:14px;text-align:center;transition:all .15s;cursor:pointer">
+              <div style="font-size:22px;font-weight:800;color:#3b7cff">A</div>
+              <div style="font-size:12px;color:#6b7280;margin-top:2px">Responsable Inscripto</div>
+              <div style="font-size:11px;color:#4b5563;margin-top:4px">Lleva IVA 21%</div>
+            </div>
+          </label>
+          <label style="cursor:pointer">
+            <input type="radio" name="tipo" value="B" id="tipoB" style="display:none" checked onchange="actualizarTipo()">
+            <div class="tipo-btn" id="btnB" onclick="seleccionar('B')"
+              style="border:2px solid #3b7cff;border-radius:8px;padding:14px;text-align:center;transition:all .15s;cursor:pointer;background:rgba(59,124,255,.06)">
+              <div style="font-size:22px;font-weight:800;color:#3b7cff">B</div>
+              <div style="font-size:12px;color:#6b7280;margin-top:2px">Consumidor Final / Monotrib.</div>
+              <div style="font-size:11px;color:#4b5563;margin-top:4px">Sin IVA discriminado</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid #252a3a;padding-top:20px;margin-bottom:20px">
+        <div class="card-title" style="margin-bottom:12px">Datos del destinatario</div>
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Nombre / Razon Social</label>
+            <input type="text" name="nombre" placeholder="Ej: Juan Perez" required>
+          </div>
+          <div class="form-group">
+            <label>Tipo de documento</label>
+            <select name="doc_tipo" id="doc_tipo" onchange="toggleDocNro()">
+              <option value="99">Consumidor Final</option>
+              <option value="96">DNI</option>
+              <option value="80">CUIT</option>
+            </select>
+          </div>
+          <div class="form-group" id="wrap-doc-nro" style="display:none">
+            <label>N de documento</label>
+            <input type="text" name="doc_nro" id="doc_nro" placeholder="Sin guiones">
+          </div>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid #252a3a;padding-top:20px;margin-bottom:20px">
+        <div class="card-title" style="margin-bottom:12px">Importe</div>
+        <div class="form-group">
+          <label id="label-monto">Monto total ($ ARS)</label>
+          <input type="number" name="monto" id="monto" placeholder="0.00"
+            step="0.01" min="0.01" required
+            style="font-size:22px;font-weight:700;padding:14px;letter-spacing:-.5px"
+            oninput="calcularIVA()">
+        </div>
+        <div id="desglose-iva" style="display:none;margin-top:12px;background:#0f1117;border:1px solid #252a3a;border-radius:8px;padding:14px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
+            <span style="color:#6b7280">Neto gravado</span>
+            <span class="mono" id="txt-neto">$0.00</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
+            <span style="color:#6b7280">IVA 21%</span>
+            <span class="mono" id="txt-iva">$0.00</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;border-top:1px solid #252a3a;padding-top:8px;margin-top:4px">
+            <span>Total</span>
+            <span class="mono" id="txt-total">$0.00</span>
+          </div>
+        </div>
+        <p id="nota-tipo" style="font-size:11px;color:#6b7280;margin-top:8px">
+          Factura B: el monto ingresado es el total final.
+        </p>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:13px">
+        Emitir factura en ARCA
+      </button>
+
+    </form>
+  </div>
+
+  <div class="card" style="margin-top:16px;padding:16px">
+    <div class="card-title">Carga masiva</div>
+    <p style="font-size:13px;color:#6b7280;margin-top:4px">
+      Tenes varias facturas? <a href="{{ url_for('masivo') }}" style="color:#3b7cff">Subi un CSV y procesalas todas de una vez</a>
+    </p>
+  </div>
+</div>
+
+<script>
+  function seleccionar(tipo) {
+    document.getElementById("tipoA").checked = (tipo === "A");
+    document.getElementById("tipoB").checked = (tipo === "B");
+    actualizarTipo();
+  }
+
+  function actualizarTipo() {
+    const esA = document.getElementById("tipoA").checked;
+    document.getElementById("btnA").style.border = esA ? "2px solid #3b7cff" : "2px solid #252a3a";
+    document.getElementById("btnA").style.background = esA ? "rgba(59,124,255,.06)" : "";
+    document.getElementById("btnB").style.border = !esA ? "2px solid #3b7cff" : "2px solid #252a3a";
+    document.getElementById("btnB").style.background = !esA ? "rgba(59,124,255,.06)" : "";
+
+    if (esA) {
+      document.getElementById("label-monto").textContent = "Monto total con IVA incluido ($ ARS)";
+      document.getElementById("nota-tipo").textContent = "Factura A: ingresa el total con IVA. El sistema calcula el neto automaticamente.";
+      document.getElementById("desglose-iva").style.display = "block";
+      // Para Factura A: doc obligatorio
+      document.getElementById("doc_tipo").value = "80";
+      toggleDocNro();
+    } else {
+      document.getElementById("label-monto").textContent = "Monto total ($ ARS)";
+      document.getElementById("nota-tipo").textContent = "Factura B: el monto ingresado es el total final.";
+      document.getElementById("desglose-iva").style.display = "none";
+      document.getElementById("doc_tipo").value = "99";
+      toggleDocNro();
+    }
+    calcularIVA();
+  }
+
+  function calcularIVA() {
+    const esA = document.getElementById("tipoA").checked;
+    const total = parseFloat(document.getElementById("monto").value) || 0;
+    if (esA && total > 0) {
+      const neto = total / 1.21;
+      const iva  = total - neto;
+      document.getElementById("txt-neto").textContent  = "$" + neto.toLocaleString("es-AR", {minimumFractionDigits:2, maximumFractionDigits:2});
+      document.getElementById("txt-iva").textContent   = "$" + iva.toLocaleString("es-AR",  {minimumFractionDigits:2, maximumFractionDigits:2});
+      document.getElementById("txt-total").textContent = "$" + total.toLocaleString("es-AR", {minimumFractionDigits:2, maximumFractionDigits:2});
+    }
+  }
+
+  function toggleDocNro() {
+    const tipo = document.getElementById("doc_tipo").value;
+    const wrap  = document.getElementById("wrap-doc-nro");
+    const input = document.getElementById("doc_nro");
+    if (tipo === "99") {
+      wrap.style.display = "none";
+      input.required = false;
+      input.value = "";
+    } else {
+      wrap.style.display = "flex";
+      input.required = true;
+    }
+  }
+</script>

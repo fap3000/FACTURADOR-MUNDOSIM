@@ -1,0 +1,5 @@
+tipo,nombre,doc_tipo,doc_nro,monto
+B,Juan Perez,96,30123456,15000
+A,Empresa SRL,80,30712345678,50000
+B,Consumidor Final,99,,1200
+A,Distribuidora Norte,80,27456789012,80000

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Carga Masiva — Mundosim{% endblock %}
+
+{% block content %}
+
+<div style="max-width:700px;margin:0 auto">
+  <div class="section-header" style="margin-bottom:24px">
+    <div>
+      <div style="font-size:12px;color:#6b7280;margin-bottom:4px">{{ sucursal }}</div>
+      <div class="section-title">Carga masiva de facturas</div>
+    </div>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-ghost" style="font-size:13px;padding:7px 14px">← Volver</a>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title" style="margin-bottom:10px">Formato del CSV</div>
+    <pre style="background:#0f1117;border:1px solid #252a3a;border-radius:7px;padding:14px;font-size:12px;overflow-x:auto;color:#e8eaf0;font-family:'JetBrains Mono',monospace;line-height:1.7">nombre,doc_tipo,doc_nro,monto
+Juan Pérez,96,30123456,15000
+Empresa SRL,80,30712345678,50000
+Consumidor Final,99,,8500.50</pre>
+    <div style="margin-top:12px;display:flex;gap:20px;font-size:12px;color:#6b7280">
+      <span><b style="color:#e8eaf0">doc_tipo:</b> 99 = Consumidor Final · 96 = DNI · 80 = CUIT</span>
+    </div>
+    <a href="/static/facturas_ejemplo.csv" download
+       style="display:inline-block;margin-top:12px;font-size:12px;color:#3b7cff;text-decoration:none">
+      ↓ Descargar CSV de ejemplo
+    </a>
+  </div>
+
+  <div class="card" style="margin-bottom:24px">
+    <form method="POST" enctype="multipart/form-data">
+      <label class="upload-zone" for="archivo">
+        <input type="file" name="archivo" id="archivo" accept=".csv" onchange="mostrarNombre(this)">
+        <div id="upload-text">
+          <div style="font-size:32px;margin-bottom:10px">📄</div>
+          <div style="font-weight:600;margin-bottom:4px">Hacé clic o arrastrá tu CSV acá</div>
+          <div style="font-size:12px;color:#6b7280">Solo archivos .csv</div>
+        </div>
+      </label>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:13px;margin-top:16px">
+        Procesar y emitir todas las facturas
+      </button>
+    </form>
+  </div>
+
+  {% if resultados %}
+  <div class="card">
+    <div class="section-header" style="margin-bottom:14px">
+      <span class="section-title" style="font-size:16px">Resultado del proceso</span>
+      <div style="font-size:13px;color:#6b7280">
+        ✓ {{ resultados|selectattr('estado','equalto','APROBADO')|list|length }} aprobadas ·
+        ✗ {{ resultados|selectattr('estado','equalto','RECHAZADO')|list|length }} rechazadas
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Destinatario</th>
+            <th>Monto</th>
+            <th>N° / CAE</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in resultados %}
+          <tr>
+            <td>{{ r.destinatario }}</td>
+            <td class="mono">${{ "{:,.2f}".format(r.monto) }}</td>
+            <td class="mono muted" style="font-size:11px">
+              {% if r.cae %}{{ r.cae }}{% else %}<span style="color:#ef4444">{{ r.error }}</span>{% endif %}
+            </td>
+            <td>
+              {% if r.estado == 'APROBADO' %}
+                <span class="badge badge-ok">Aprobado</span>
+              {% else %}
+                <span class="badge badge-err">Rechazado</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  function mostrarNombre(input) {
+    if (input.files && input.files[0]) {
+      document.getElementById("upload-text").innerHTML =
+        `<div style="font-size:28px;margin-bottom:8px">✅</div>
+         <div style="font-weight:600">${input.files[0].name}</div>
+         <div style="font-size:12px;color:#6b7280">${input.files[0].size > 1024 ? (input.files[0].size/1024).toFixed(1)+'KB' : input.files[0].size+' bytes'}</div>`;
+    }
+  }
+</script>
+
+{% endblock %}
