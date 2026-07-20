@@ -197,13 +197,26 @@ def masivo():
         filas = []
  
         if nombre.endswith(".xlsx") or nombre.endswith(".xls"):
-            # Leer Excel con openpyxl
             try:
                 import openpyxl
                 wb = openpyxl.load_workbook(archivo)
                 ws = wb.active
-                headers = [str(cell.value).strip().lower() if cell.value else "" for cell in ws[1]]
-                for row in ws.iter_rows(min_row=2, values_only=True):
+ 
+                # Buscar la fila que tiene los headers (puede no ser la primera)
+                header_row = None
+                headers = []
+                for i, row in enumerate(ws.iter_rows(values_only=True), start=1):
+                    valores = [str(v).strip().upper() if v else "" for v in row]
+                    if any(v in ("TIPOCOMPROBANTE", "TIPO", "RAZONSOCIAL", "NOMBRE") for v in valores):
+                        header_row = i
+                        headers = [str(v).strip().lower() if v else "" for v in row]
+                        break
+ 
+                if not header_row:
+                    flash("No se encontraron los encabezados en el Excel.", "error")
+                    return redirect(url_for("masivo"))
+ 
+                for row in ws.iter_rows(min_row=header_row + 1, values_only=True):
                     if not any(row):
                         continue
                     fila = {headers[i]: (str(v).strip() if v is not None else "") for i, v in enumerate(row)}
