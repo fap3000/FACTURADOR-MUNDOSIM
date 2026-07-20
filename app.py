@@ -215,9 +215,26 @@ def masivo():
             reader = csv.DictReader(io.StringIO(content))
             filas = [{k.lower().strip(): v for k, v in row.items()} for row in reader]
 
-        for fila in filas:
-            tipo = fila.get("tipo", "B").strip().upper()
-            monto_total = float(fila.get("monto", 0))
+     for fila in filas:
+            # Soporta tanto nombres nuevos (Excel Mundosim) como nombres viejos (CSV)
+            tipo_raw = (fila.get("tipocomprobante") or fila.get("tipo") or "FB").strip().upper()
+            # FA -> A, FB -> B
+            tipo = tipo_raw.replace("F", "") if tipo_raw in ("FA", "FB") else tipo_raw
+
+            nombre = (fila.get("razonsocial") or fila.get("nombre") or "").strip()
+            monto_total = float(fila.get("monto") or 0)
+
+            # Tipo de documento
+            tipo_doc_raw = (fila.get("tipodocumento") or fila.get("doc_tipo") or "CF").strip().upper()
+            if tipo_doc_raw in ("CUIT", "80"):
+                doc_tipo = 80
+            elif tipo_doc_raw in ("DNI", "96"):
+                doc_tipo = 96
+            else:
+                doc_tipo = 99  # Consumidor Final
+
+            doc_nro = (fila.get("nrodocumento") or fila.get("doc_nro") or "").strip()
+            doc_nro = doc_nro.replace("-", "").replace(".", "")
 
             if tipo == "A":
                 neto = round(monto_total / 1.21, 2)
@@ -228,13 +245,14 @@ def masivo():
 
             data = {
                 "tipo":     tipo,
-                "nombre":   fila.get("nombre", "").strip(),
-                "doc_tipo": int(fila.get("doc_tipo", 99)),
-                "doc_nro":  fila.get("doc_nro", "").strip(),
+                "nombre":   nombre,
+                "doc_tipo": doc_tipo,
+                "doc_nro":  doc_nro,
                 "neto":     neto,
                 "iva":      iva,
                 "monto":    monto_total,
             }
+          
             resultado = emitir_factura_arca(data)
             guardar_comprobante(resultado)
             resultados.append(resultado)
